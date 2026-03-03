@@ -33,3 +33,20 @@ PERMISSIONS = [
 'projects.change_timeentry',
 'projects.manage_settings',
 ]
+
+ROLE_PERMISSIONS = {
+    "admin": ["*"],
+    "manager": [
+        "add_project",
+        "add_timeentry",
+        "change_project",
+        "change_timeentry",
+        "view_project",
+        "view_timeentry",
+    ],
+    "employee": [
+        "add_project",
+        "view_project",
+        "view_timeentry",
+    ],
+}
