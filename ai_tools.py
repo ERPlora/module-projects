@@ -114,3 +114,131 @@ class LogTimeEntry(AssistantTool):
             is_billable=args.get('is_billable', True),
         )
         return {"id": str(te.id), "hours": te.hours, "created": True}
+
+
+@register_tool
+class UpdateProject(AssistantTool):
+    name = "update_project"
+    description = "Update a project's fields."
+    module_id = "projects"
+    required_permission = "projects.change_project"
+    requires_confirmation = True
+    parameters = {
+        "type": "object",
+        "properties": {
+            "project_id": {"type": "string"},
+            "name": {"type": "string"},
+            "code": {"type": "string"},
+            "description": {"type": "string"},
+            "status": {"type": "string", "description": "active, on_hold, completed, cancelled"},
+            "start_date": {"type": "string"},
+            "end_date": {"type": "string"},
+            "budget": {"type": "string"},
+        },
+        "required": ["project_id"],
+        "additionalProperties": False,
+    }
+
+    def execute(self, args, request):
+        from decimal import Decimal
+        from projects.models import Project
+        try:
+            p = Project.objects.get(id=args['project_id'])
+        except Project.DoesNotExist:
+            return {"error": "Project not found"}
+        fields = []
+        for field in ('name', 'code', 'description', 'status', 'start_date', 'end_date'):
+            if field in args:
+                setattr(p, field, args[field])
+                fields.append(field)
+        if 'budget' in args:
+            p.budget = Decimal(args['budget'])
+            fields.append('budget')
+        if fields:
+            p.save(update_fields=fields + ['updated_at'])
+        return {"id": str(p.id), "name": p.name, "updated": True}
+
+
+@register_tool
+class DeleteProject(AssistantTool):
+    name = "delete_project"
+    description = "Delete a project."
+    module_id = "projects"
+    required_permission = "projects.delete_project"
+    requires_confirmation = True
+    parameters = {
+        "type": "object",
+        "properties": {"project_id": {"type": "string"}},
+        "required": ["project_id"],
+        "additionalProperties": False,
+    }
+
+    def execute(self, args, request):
+        from projects.models import Project
+        try:
+            p = Project.objects.get(id=args['project_id'])
+            name = p.name
+            p.delete()
+            return {"deleted": True, "name": name}
+        except Project.DoesNotExist:
+            return {"error": "Project not found"}
+
+
+@register_tool
+class UpdateProjectTask(AssistantTool):
+    name = "update_project_task"
+    description = "Update a project time entry (description, hours, date, billable flag)."
+    module_id = "projects"
+    required_permission = "projects.change_project"
+    requires_confirmation = True
+    parameters = {
+        "type": "object",
+        "properties": {
+            "entry_id": {"type": "string"},
+            "description": {"type": "string"},
+            "hours": {"type": "number"},
+            "date": {"type": "string"},
+            "is_billable": {"type": "boolean"},
+        },
+        "required": ["entry_id"],
+        "additionalProperties": False,
+    }
+
+    def execute(self, args, request):
+        from projects.models import TimeEntry
+        try:
+            te = TimeEntry.objects.get(id=args['entry_id'])
+        except TimeEntry.DoesNotExist:
+            return {"error": "Time entry not found"}
+        fields = []
+        for field in ('description', 'hours', 'date', 'is_billable'):
+            if field in args:
+                setattr(te, field, args[field])
+                fields.append(field)
+        if fields:
+            te.save(update_fields=fields + ['updated_at'])
+        return {"id": str(te.id), "updated": True}
+
+
+@register_tool
+class DeleteProjectTask(AssistantTool):
+    name = "delete_project_task"
+    description = "Delete a project time entry."
+    module_id = "projects"
+    required_permission = "projects.change_project"
+    requires_confirmation = True
+    parameters = {
+        "type": "object",
+        "properties": {"entry_id": {"type": "string"}},
+        "required": ["entry_id"],
+        "additionalProperties": False,
+    }
+
+    def execute(self, args, request):
+        from projects.models import TimeEntry
+        try:
+            te = TimeEntry.objects.get(id=args['entry_id'])
+            te.delete()
+            return {"deleted": True}
+        except TimeEntry.DoesNotExist:
+            return {"error": "Time entry not found"}
