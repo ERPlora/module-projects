@@ -2,8 +2,8 @@ from django.utils.translation import gettext_lazy as _
 
 MODULE_ID = 'projects'
 MODULE_NAME = _('Projects & Time Tracking')
-MODULE_VERSION = '1.0.0'
-MODULE_ICON = 'git-branch-outline'
+MODULE_VERSION = '1.0.1'
+MODULE_ICON = 'material:assignment'
 MODULE_DESCRIPTION = _('Project management, milestones and time tracking')
 MODULE_AUTHOR = 'ERPlora'
 MODULE_CATEGORY = 'operations'
